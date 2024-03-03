@@ -1,0 +1,1 @@
+VarBid: {USD BRL Dólar Americano/Real Brasileiro 4.9746 4.9464 -0.0171 -0.34 4.9541 4.9549 1709330340 2024-03-01 18:59:00}
