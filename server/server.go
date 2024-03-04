@@ -56,7 +56,7 @@ func criarArquivo(data cotacao) error {
 	return nil
 }
 
-func inserirCotacao(c cotacao) error {
+func salvarDadosCotacao(c cotacao) error {
 
 	error := database.AutoMigrate()
 
@@ -133,14 +133,7 @@ func getCotacao(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(os.Stderr, "Ocorreu um erro ao converter os dados em json: %v\n", err)
 	}
 
-	err = criarArquivo(data)
-
-	if err != nil {
-		mensagemHttpResponse(w, "Ocorreu um erro ao criar o arquivo.", http.StatusInternalServerError)
-		fmt.Fprintf(os.Stderr, "Ocorreu um erro ao criar o arquivo: %v\n", err)
-	}
-
-	err = inserirCotacao(data)
+	err = salvarDadosCotacao(data)
 
 	if err != nil {
 		mensagemHttpResponse(w, "Ocorreu um erro ao salvar os dados.", http.StatusInternalServerError)

@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -80,5 +81,11 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Ocorreu um erro ao criar o arquivo: %v\n", err)
 	}
 
-	fmt.Fprintf(os.Stderr, "Valor atual da cotação: %v\n", data.Bid)
+	valor_bid, err := strconv.ParseFloat(data.Bid, 64)
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Ocorreu um erro ao converter uma string para float: %v\n", err)
+	}
+
+	fmt.Fprintf(os.Stderr, "Valor atual da cotação US$: %.2f\n", valor_bid)
 }

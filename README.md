@@ -4,16 +4,39 @@
  
 #### Os requisitos para cumprir este desafio são:
  
-1. O client.go deverá realizar uma requisição HTTP no server.go solicitando a cotação do dólar.
+1. O client.go deverá realizar uma requisição HTTP no server.go solicitando a cotação do dólar. :+1:
  
-2. O server.go deverá consumir a API contendo o câmbio de Dólar e Real no endereço: https://economia.awesomeapi.com.br/json/last/USD-BRL e em seguida deverá **retornar no formato JSON** o resultado para o cliente.
+2. O server.go deverá consumir a API contendo o câmbio de Dólar e Real no endereço: https://economia.awesomeapi.com.br/json/last/USD-BRL e em seguida deverá **retornar no formato JSON** o resultado para o cliente. :+1:
  
-3. Usando o package "context", o server.go deverá registrar no banco de dados **SQLite** cada cotação recebida, sendo que o timeout máximo para chamar a API de cotação do dólar deverá ser de 200ms e o timeout máximo para conseguir persistir os dados no banco deverá ser de 10ms.
+3. Usando o package "context", o server.go deverá registrar no banco de dados **SQLite** cada cotação recebida, sendo que o timeout máximo para chamar a API de cotação do dólar deverá ser de 200ms e o timeout máximo para conseguir persistir os dados no banco deverá ser de 10ms.  :-1:
  
-4. O client.go precisará receber do server.go apenas o valor atual do câmbio (campo "bid" do JSON). Utilizando o package "context", o client.go terá um timeout máximo de 300ms para receber o resultado do server.go.
+4. O client.go precisará receber do server.go apenas o valor atual do câmbio (campo "bid" do JSON). Utilizando o package "context", o client.go terá um timeout máximo de 300ms para receber o resultado do server.go. :+1:
  
-5. Os 3 contextos deverão retornar erro nos logs caso o tempo de execução seja insuficiente.
+5. Os 3 contextos deverão retornar erro nos logs caso o tempo de execução seja insuficiente.  :-1:
  
-6. O client.go terá que salvar a cotação atual em um arquivo "cotacao.txt" no formato: Dólar: {valor}
+6. O client.go terá que salvar a cotação atual em um arquivo "cotacao.txt" no formato: Dólar: {valor} :+1:
  
-7. O endpoint necessário gerado pelo server.go para este desafio será: /cotacao e a porta a ser utilizada pelo servidor HTTP será a 8080.
+7. O endpoint necessário gerado pelo server.go para este desafio será: /cotacao e a porta a ser utilizada pelo servidor HTTP será a 8080. :+1:
+
+#### Sobre o sistema 
+Go Versão: 1.21
+Sqlite 3.37
+
+#### Utilização 
+
+baixar o projeto
+```
+git clone https://github.com/chasinfo/go-client-server.git
+```
+
+Iniciar o servidor
+```
+cd go-client-server/server/
+go run server.go 
+```
+
+Acessar o servidor através do cliente. **Atenção: o servidor deve está em execução**.
+```
+cd go-client-server/client/
+go run client.go 
+```
