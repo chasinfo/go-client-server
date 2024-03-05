@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -58,13 +59,16 @@ func criarArquivo(data cotacao) error {
 
 func salvarDadosCotacao(c cotacao) error {
 
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Millisecond)
+	defer cancel()
+
 	error := database.AutoMigrate()
 
 	if error != nil {
 		return error
 	}
 
-	database.DbConnect().Create(&database.TCotacao{
+	database.DbConnect().WithContext(ctx).Create(&database.TCotacao{
 		Code:       c.Usdbrl.Code,
 		Codein:     c.Usdbrl.Codein,
 		Name:       c.Usdbrl.Name,
@@ -78,7 +82,12 @@ func salvarDadosCotacao(c cotacao) error {
 		CreateDate: c.Usdbrl.CreateDate,
 	})
 
-	return nil
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(10 * time.Millisecond):
+		return nil
+	}
 }
 
 func mensagemHttpResponse(w http.ResponseWriter, rMensagem string, status int) {
@@ -95,7 +104,7 @@ func getCotacao(w http.ResponseWriter, r *http.Request) {
 
 	if r.URL.Path != "/cotacao" {
 		mensagemHttpResponse(w, "Endereço não foi encontrado.", http.StatusNotFound)
-		fmt.Fprintf(os.Stderr, "Endereço não foi encontrado\n")
+		log.Println("Endereço não foi encontrado.")
 		return
 	}
 
@@ -104,24 +113,23 @@ func getCotacao(w http.ResponseWriter, r *http.Request) {
 	req, err := http.NewRequestWithContext(ctx, "GET", "https://economia.awesomeapi.com.br/json/last/USD-BRL", nil)
 
 	if err != nil {
-		mensagemHttpResponse(w, "Não foi possível efetuar a conexão.", http.StatusInternalServerError)
-		fmt.Fprintf(os.Stderr, "Não foi possível efetuar a conexão: %v\n", err)
+		log.Printf("Não foi possível efetuar a conexão. %v\n", err)
 		return
 	}
 
 	res, err := http.DefaultClient.Do(req)
 
 	if err != nil {
-		mensagemHttpResponse(w, "Ocorreu um erro ao ao receber a requisição.", http.StatusBadRequest)
-		fmt.Fprintf(os.Stderr, "Ocorreu um erro ao ao receber a requisição: %v\n", err)
+		log.Printf("Não foi possível efetuar a requisição. %v\n", err)
+		return
 	}
 
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 
 	if err != nil {
-		mensagemHttpResponse(w, "Ocorreu um erro ao ler a requisição.", http.StatusBadRequest)
-		fmt.Fprintf(os.Stderr, "Ocorreu um erro ao ler a requisição: %v\n", err)
+		log.Printf("Ocorreu um erro ao receber os dados da requisição. %v\n", err)
+		return
 	}
 
 	var data cotacao
@@ -129,18 +137,19 @@ func getCotacao(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(body, &data)
 
 	if err != nil {
-		mensagemHttpResponse(w, "Ocorreu um erro ao converter os dados em json.", http.StatusInternalServerError)
-		fmt.Fprintf(os.Stderr, "Ocorreu um erro ao converter os dados em json: %v\n", err)
+		log.Printf("Ocorreu um erro ao converter os dados para json. %v\n", err)
+		return
 	}
 
 	err = salvarDadosCotacao(data)
 
 	if err != nil {
-		mensagemHttpResponse(w, "Ocorreu um erro ao salvar os dados.", http.StatusInternalServerError)
-		fmt.Fprintf(os.Stderr, "Ocorreu um erro ao salvar os dados: %v\n", err)
+		log.Printf("Ocorreu um erro ao salvar os dados na base de dados. %v\n", err)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(data.Usdbrl)
+	log.Println("\n\n====================================== Requisição executada com sucesso. ======================================")
 }

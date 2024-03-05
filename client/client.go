@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -25,7 +26,7 @@ type cotacao struct {
 	CreateDate string `json:"create_date"`
 }
 
-func criarArquivo(data cotacao) error {
+func criarArquivo(valor float64) error {
 	file, err := os.Create("cotacao.txt")
 
 	if err != nil {
@@ -34,7 +35,7 @@ func criarArquivo(data cotacao) error {
 
 	defer file.Close()
 
-	_, err = file.WriteString(fmt.Sprintf("VarBid: %s", data))
+	_, err = file.WriteString(fmt.Sprintf("Dólar: %.2f", valor))
 
 	if err != nil {
 		return err
@@ -50,21 +51,23 @@ func main() {
 	req, err := http.NewRequestWithContext(ctx, "GET", "http://localhost:8080/cotacao", nil)
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Não foi possível efetuar a conexão: %v\n", err)
+		log.Printf("Não foi possível efetuar a conexão: %v\n", err)
 		return
 	}
 
 	res, err := http.DefaultClient.Do(req)
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Ocorreu um erro ao ao receber a requisição: %v\n", err)
+		log.Printf("Ocorreu um erro ao ao receber a requisição: %v\n", err)
+		return
 	}
 
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Ocorreu um erro ao ler a requisição: %v\n", err)
+		log.Printf("Ocorreu um erro ao ler a requisição: %v\n", err)
+		return
 	}
 
 	var data cotacao
@@ -72,20 +75,23 @@ func main() {
 	err = json.Unmarshal(body, &data)
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Ocorreu um erro ao converter os dados em json: %v\n", err)
-	}
-
-	err = criarArquivo(data)
-
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Ocorreu um erro ao criar o arquivo: %v\n", err)
+		log.Printf("Ocorreu um erro ao converter os dados para json: %v\n", err)
+		return
 	}
 
 	valor_bid, err := strconv.ParseFloat(data.Bid, 64)
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Ocorreu um erro ao converter uma string para float: %v\n", err)
+		log.Printf("Ocorreu um erro ao converter uma string para float: %v\n", err)
+		return
 	}
 
-	fmt.Fprintf(os.Stderr, "Valor atual da cotação US$: %.2f\n", valor_bid)
+	err = criarArquivo(valor_bid)
+
+	if err != nil {
+		log.Printf("Ocorreu um erro ao criar o arquivo: %v\n", err)
+		return
+	}
+
+	fmt.Fprintf(os.Stderr, "Valor atual do Dolar US$: %.2f\n", valor_bid)
 }
